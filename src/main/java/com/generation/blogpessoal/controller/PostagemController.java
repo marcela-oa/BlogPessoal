@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.generation.blogpessoal.model.Postagem;
 import com.generation.blogpessoal.repository.PostagemRepository;
+import com.generation.blogpessoal.repository.TemaRepository;
 
 @RestController
 @RequestMapping("/postagens")
@@ -27,6 +28,9 @@ public class PostagemController {
 
 	@Autowired //injeção de dependência e só funciona dentro dessa classe. Para funcionar em qualquer classe, usar o bin
 	private PostagemRepository postagemRepository;
+	
+	@Autowired
+	private TemaRepository temaRepository;
 	
 	@GetMapping
 	public ResponseEntity<List<Postagem>> getAll () {
@@ -56,14 +60,22 @@ public class PostagemController {
 	
 	@PostMapping
 	public ResponseEntity<Postagem> postPostagem (@Valid @RequestBody Postagem postagem) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(postagemRepository.save(postagem));
+		return temaRepository.findById(postagem.getTema().getId())
+				.map(resposta -> ResponseEntity.status(HttpStatus.CREATED).body(postagemRepository.save(postagem)))
+				.orElse(ResponseEntity.notFound().build());
 	}
 	
 	@PutMapping
 	public ResponseEntity<Postagem> putPostagem (@Valid @RequestBody Postagem postagem) {
-		return postagemRepository.findById(postagem.getId())						
-				.map(resposta -> ResponseEntity.status(HttpStatus.OK).body(postagemRepository.save(postagem))) 		
-				.orElse(ResponseEntity.notFound().build());
+		if (postagemRepository.existsById(postagem.getId())) {
+			if(temaRepository.existsById(postagem.getTema().getId())) {
+				return ResponseEntity.status(HttpStatus.OK).body(postagemRepository.save(postagem));
+			} else {
+				return ResponseEntity.notFound().build();
+			} 
+		} else {
+			return ResponseEntity.notFound().build();
+		}
 	}
 	
 	@DeleteMapping("/{id}")
