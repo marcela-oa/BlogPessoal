@@ -28,7 +28,7 @@ public class TemaController {
 	@Autowired
 	private TemaRepository temaRepository;
 	
-	@GetMapping
+	@GetMapping("/all")
 	public ResponseEntity<List<Tema>> getAll () {
 		return ResponseEntity.ok(temaRepository.findAll());
 	}
